@@ -86,29 +86,46 @@ class Interpreter(object):
 
     def expr(self):
         """expr -> INTEGER PLUS INTEGER"""
-        # set current token to the first token taken from the input
+        # *
+        # * support multi integer plus like 1+2+3
+        # *
+        _index = 0
+        _result = 0
+        op = None
         self.current_token = self.get_next_token()
+        while(_index < len(self.text)):
+            # set current token to the first token taken from the input
+            # we expect the current token to be a single-digit integer
+            if (self.current_token.type == "INTEGER" and _result == 0):
+                _result = self.current_token.value
+                self.eat(INTEGER)
+                _index=_index + 1
+            else:
+                if (self.current_token.type == "PLUS"):
+                    op = self.current_token
+                    self.eat(PLUS)
+                    _index=_index + 1
+                if (self.current_token.type == "INTEGER"):
+                    _current_tkn =  self.current_token
+                    self.eat(INTEGER)
+                    _index=_index + 1
 
-        # we expect the current token to be a single-digit integer
-        left = self.current_token
-        self.eat(INTEGER)
+            # *
+            # * if there are PLUS
+            # *
+            if (op != None and op.type == "PLUS"):
+                _result = _result + _current_tkn.value
 
-        # we expect the current token to be a '+' token
-        op = self.current_token
-        self.eat(PLUS)
+            # after the above call the self.current_token is set to
+            # EOF token
 
-        # we expect the current token to be a single-digit integer
-        right = self.current_token
-        self.eat(INTEGER)
-        # after the above call the self.current_token is set to
-        # EOF token
+            # at this point INTEGER PLUS INTEGER sequence of tokens
+            # has been successfully found and the method can just
+            # return the result of adding two integers, thus
+            # effectively interpreting client input
 
-        # at this point INTEGER PLUS INTEGER sequence of tokens
-        # has been successfully found and the method can just
-        # return the result of adding two integers, thus
-        # effectively interpreting client input
-        result = left.value + right.value
-        return result
+            # result = left.value + right.value
+        return _result
 
 
 def main():
@@ -119,6 +136,14 @@ def main():
             break
         if not text:
             continue
+
+        #*
+        #* remove all whitespace in the text string
+        #*    strip: remove leading and trailing whitespaces
+        #*    replace: remove the middle whitespaces
+        #*
+        text = text.strip().replace(" ", "")
+
         interpreter = Interpreter(text)
         result = interpreter.expr()
         print(result)
